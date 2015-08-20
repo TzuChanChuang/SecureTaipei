@@ -14,4 +14,6 @@
     <string name="str_btn_find">Search</string>
     <string name="hnt_et_location">Enter location</string>
 
+    <string name="text_search">Enter location</string>
+    <string name="search_title">Search</string>
 </resources>

@@ -32,6 +32,7 @@ import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.location.LocationRequest;
 import android.location.Location;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
@@ -503,6 +504,23 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
         mSearchView = (SearchView) searchItem.getActionView();
         setupSearchView(searchItem);
         */
+        /*SearchManager searchManager =
+                (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        SearchView searchView =
+                (SearchView) menu.findItem(R.id.action_search).getActionView();
+        searchView.setSearchableInfo(
+                searchManager.getSearchableInfo(getComponentName()));
+        */
+
+
+        /////
+        try {
+            SearchView searchView = (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.action_search));
+            searchView.setOnQueryTextListener(queryListener);
+        }catch(Exception e){
+
+        }
+        //////
         return true;
     }
 
@@ -513,70 +531,59 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+
+        /*if(id== R.id.action_search){
+
+            if(location!=null && !location.equals("")){
+                new GeocoderTask().execute(location);
+            }
+
             return true;
-        }
+        }*/
 
         return super.onOptionsItemSelected(item);
     }
-
-    ///////////////////////
-    /////searh item//////
-    ////////////////////
     /*
-    private void setupSearchView(MenuItem searchItem) {
+    @Override
+    protected void onNewIntent(Intent intent) {
+        handleIntent(intent);
+    }
 
-        if (isAlwaysExpanded()) {
-            mSearchView.setIconifiedByDefault(false);
-        } else {
-            searchItem.setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM
-                    | MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
-        }
+    private void handleIntent(Intent intent) {
 
-        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        if (searchManager != null) {
-            List searchables = searchManager
-                    .getSearchablesInGlobalSearch();
-
-            SearchableInfo info = searchManager
-                    .getSearchableInfo(getComponentName());
-            for (SearchableInfo inf : searchables) {
-                if (inf.getSuggestAuthority() != null
-                        && inf.getSuggestAuthority().startsWith("applications")) {
-                    info = inf;
-                }
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            String query = intent.getStringExtra(SearchManager.QUERY);
+            //use the query to search
+            if(query!=null && !query.equals("")){
+                new GeocoderTask().execute(query);
             }
-            mSearchView.setSearchableInfo(info);
+        }
+    }
+*/
+    /////////
+
+
+
+    final private android.support.v7.widget.SearchView.OnQueryTextListener queryListener = new android.support.v7.widget.SearchView.OnQueryTextListener() {
+
+        @Override
+        public boolean onQueryTextChange(String newText) {
+
+            //直接丟給filter
+
+            //MessageListMainFragment.this.adapter.getFilter().filter(newText);
+            return false;
         }
 
-        mSearchView.setOnQueryTextListener(this);
-    }
-
-    @Override
-    public boolean onQueryTextChange(String newText) {
-        // TODO Auto-generated method stub
-        //mStatusView.setText("SEARCH = " + newText);
-        return false;
-    }
-
-    @Override
-    public boolean onQueryTextSubmit(String query) {
-        // TODO Auto-generated method stub
-        //mStatusView.setText("SEARCH = " + query + " : submitted");
-        return false;
-    }
-
-    public boolean onClose() {
-        //mStatusView.setText("Closed!");
-        return false;
-    }
-
-    protected boolean isAlwaysExpanded() {
-        return false;
-    }
-    */
-
+        @Override
+        public boolean onQueryTextSubmit(String query) {
+            //Log.d(TAG, "submit:"+query);
+            if(query!=null && !query.equals("")){
+                new GeocoderTask().execute(query);
+            }
+            return false;
+        }
+    };
 
     ///////////////////////////
     /////////UI init///////////
