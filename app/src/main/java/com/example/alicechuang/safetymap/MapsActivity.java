@@ -3,14 +3,20 @@ package com.example.alicechuang.safetymap;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.SearchManager;
 import android.app.SearchableInfo;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
@@ -25,6 +31,8 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -33,22 +41,31 @@ import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListe
 import com.google.android.gms.location.LocationRequest;
 import android.location.Location;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckedTextView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.model.Marker;
+
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.List;
@@ -72,9 +89,34 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
     //////Move to current location////
     private int CurrentLocationStart = 0;
 
-    ///////For Search View//////
-    //private SearchView mSearchView;
-    //private TextView mStatusView;
+    //////////timer
+    long startTime = 0;
+    long millis;
+    int seconds;
+    int minutes;
+    //runs without a timer by reposting this handler at the end of the runnable
+    Handler timerHandler = new Handler();
+    Runnable timerRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            millis = System.currentTimeMillis() - startTime;
+            seconds = (int) (millis / 1000);
+            minutes = seconds / 60;
+            seconds = seconds % 60;
+
+            android.support.v7.app.ActionBar show= getSupportActionBar();
+            show.setTitle(minutes+":"+seconds);
+            //timerTextView.setText(String.format("%d:%02d", minutes, seconds));
+
+            timerHandler.postDelayed(this, 500);
+
+            if(minutes==1){
+                startTime = System.currentTimeMillis();
+                Notification();
+            }
+        }
+    };
 
 
     @Override
@@ -137,19 +179,12 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
             CurrentLocationStart = 0;
 
         }
-
-        // 設定目前位置的標記--------------加上現在位置mark
-        /*
-        if (currentMarker == null) {
-            currentMarker = mMap.addMarker(new MarkerOptions().position(latLng));
-        }
-        else{
-            currentMarker.setPosition(latLng);
-        }
-        */
-
-        // 移動地圖到目前的位置
-       //moveMap(latLng);
+        
+        Circle circle = mMap.addCircle(new CircleOptions()
+                .center(latLng)
+                .radius(300)    //meters
+                .strokeColor(Color.BLACK)
+                .fillColor(Color.RED));
     }
 
     // 移動地圖到參數指定的位置
@@ -204,8 +239,13 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        initActionBar();
+        //get bubble
+        getUserInfo();
+        setUserInfo();
 
+        initActionBar();
+        initDrawer();
+        initDrawerList();
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -247,38 +287,34 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
         // Getting a reference to the map
         mMap = mapFragment.getMap();
 
-        // Getting reference to btn_find of the layout activity_main
-        Button btn_find = (Button) findViewById(R.id.btn_find);
-
-        // Defining button click event listener for the find button
-        View.OnClickListener findClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Getting reference to EditText to get the user input location
-                EditText etLocation = (EditText) findViewById(R.id.et_location);
-
-                // Getting user input location
-                String location = etLocation.getText().toString();
-
-                if(location!=null && !location.equals("")){
-                    new GeocoderTask().execute(location);
-                }
-            }
-        };
-
-        // Setting button click event listener for the find button
-        btn_find.setOnClickListener(findClickListener);
-
-
-
         //////Image Button--CurrentLocation
         SetupImageButton1_CurrentLocation();
 
+        ////timer
+        startTime = System.currentTimeMillis();
+        timerHandler.postDelayed(timerRunnable, 0);
 
-        //////////////
-        //mStatusView = (TextView) findViewById(R.id.status);
 
+    }
 
+    /////////add notification///
+    public void Notification(){
+        Intent intent = new Intent(this, NotificationReceiverActivity.class);
+        PendingIntent pIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), intent, 0);
+
+        Notification noti = new Notification.Builder(this)
+                .setContentTitle("New mail from " + "test@gmail.com")
+                .setContentText("Subject").setSmallIcon(R.drawable.ic_launcher)
+                .setContentIntent(pIntent)
+                .addAction(R.drawable.ic_launcher, "Call", pIntent)
+                .addAction(R.drawable.ic_launcher, "More", pIntent)
+                .setVibrate(new long[] { 200,200,200,200})
+                .addAction(R.drawable.ic_launcher, "And more", pIntent).build();
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // hide the notification after its selected
+        noti.flags |= Notification.FLAG_AUTO_CANCEL;
+
+        notificationManager.notify(0, noti);
     }
 
     public void SetupImageButton1_CurrentLocation(){
@@ -311,6 +347,9 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
             LocationServices.FusedLocationApi.removeLocationUpdates(
                     googleApiClient, this);
         }
+
+        //timer
+        //timerHandler.removeCallbacks(timerRunnable);
     }
 
     @Override
@@ -497,21 +536,7 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        MenuInflater inflater =getMenuInflater();
-        inflater.inflate(R.menu.main_menu, menu);
-        /*
-        MenuItem searchItem = menu.findItem(R.id.search);
-        mSearchView = (SearchView) searchItem.getActionView();
-        setupSearchView(searchItem);
-        */
-        /*SearchManager searchManager =
-                (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        SearchView searchView =
-                (SearchView) menu.findItem(R.id.action_search).getActionView();
-        searchView.setSearchableInfo(
-                searchManager.getSearchableInfo(getComponentName()));
-        */
-
+        getMenuInflater().inflate(R.menu.main_menu, menu);
 
         /////
         try {
@@ -521,8 +546,9 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
 
         }
         //////
-        return true;
+        return super.onCreateOptionsMenu(menu);
     }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -531,37 +557,23 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-
-        /*if(id== R.id.action_search){
-
-            if(location!=null && !location.equals("")){
-                new GeocoderTask().execute(location);
-            }
-
+        /** drawer*/
+        //按到friend_button的反應
+        if (id == R.id.friend_button) {
+            layDrawer.closeDrawer(Gravity.LEFT);
+            if(layDrawer.isDrawerOpen(Gravity.RIGHT))
+                layDrawer.closeDrawer(Gravity.RIGHT);
+            else
+                layDrawer.openDrawer(Gravity.RIGHT);
             return true;
-        }*/
+        }
+        //按ic_drawer有反應
+        if (drawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
 
         return super.onOptionsItemSelected(item);
     }
-    /*
-    @Override
-    protected void onNewIntent(Intent intent) {
-        handleIntent(intent);
-    }
-
-    private void handleIntent(Intent intent) {
-
-        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-            String query = intent.getStringExtra(SearchManager.QUERY);
-            //use the query to search
-            if(query!=null && !query.equals("")){
-                new GeocoderTask().execute(query);
-            }
-        }
-    }
-*/
-    /////////
-
 
 
     final private android.support.v7.widget.SearchView.OnQueryTextListener queryListener = new android.support.v7.widget.SearchView.OnQueryTextListener() {
@@ -589,13 +601,15 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
     /////////UI init///////////
     ///////////////////////////
 
-    /////initial actionbar/////
+    /**initial actionbar */
     android.support.v7.widget.Toolbar toolbar;
     private void initActionBar(){
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.inflateMenu(R.menu.main_menu);
         setSupportActionBar(toolbar);
+
+        toolbar.hideOverflowMenu();
 
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setLogo(R.drawable.ic_launcher);
@@ -609,6 +623,172 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
         //這個方法和 setDisplayHomeAsUpEnabled 會互相影響。
         //setHomeButtonEnabled 若為 true 則 App icon 可以被點選，若為 false 則無任何事件觸發
         getSupportActionBar().setHomeButtonEnabled(true);
+    }
+
+
+    /** initial Drawer */
+    private DrawerLayout layDrawer;
+    private ListView lsv_L_Drawer;
+    //private LinearLayout liv_L_Drawer;
+    private ListView lsv_R_Drawer;
+    //private LinearLayout liv_R_Drawer;
+    private ActionBarDrawerToggle drawerToggle;
+
+    private CharSequence mDrawerTitle;
+    private CharSequence mTitle;
+    private void initDrawer(){
+        //get view
+        layDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        lsv_L_Drawer = (ListView) findViewById(R.id.lsv_left_menu);
+        //liv_L_Drawer = (LinearLayout) findViewById(R.id.left_drawer);
+        lsv_R_Drawer = (ListView) findViewById(R.id.lsv_right_menu);
+        //liv_R_Drawer = (LinearLayout) findViewById(R.id.right_drawer);
+
+        //layDrawer.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+        layDrawer.setDrawerShadow(new ColorDrawable(Color.BLACK), Gravity.LEFT);
+        layDrawer.setDrawerShadow(new ColorDrawable(Color.BLACK), Gravity.RIGHT);
+
+        //mTitle = mDrawerTitle = getTitle();
+        mTitle = getTitle();
+        mDrawerTitle = "MENU";
+
+        drawerToggle = new ActionBarDrawerToggle(
+                this,
+                layDrawer,
+                toolbar,
+                R.string.drawer_open,
+                R.string.drawer_close) {
+
+            @Override
+            public void onDrawerClosed(View view) {
+
+                super.onDrawerClosed(view);
+
+                getSupportActionBar().setTitle(mTitle);
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                if(layDrawer.isDrawerOpen(Gravity.LEFT))
+                    layDrawer.closeDrawer(Gravity.RIGHT);
+
+                if(layDrawer.isDrawerOpen(Gravity.LEFT))
+                    mDrawerTitle = "Left Menu";
+                else
+                    mDrawerTitle = "Right Menu";
+                getSupportActionBar().setTitle(mDrawerTitle);
+
+                //check friend request
+                if(layDrawer.isDrawerOpen(Gravity.RIGHT)){
+                    if(hasFriReq){
+                        setFriendRequest();
+                    }
+                }
+            }
+
+        };
+        drawerToggle.syncState();
+
+        layDrawer.setDrawerListener(drawerToggle);
+
+        //側選單點選偵聽器
+        lsv_L_Drawer.setOnItemClickListener(new DrawerItemClickListener());
+        lsv_R_Drawer.setOnItemClickListener(new DrawerItemClickListener());
+    }
+    /** 側邊欄點選事件 */
+    private class DrawerItemClickListener implements ListView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            selectItem(position);
+        }
+    }
+    /** 選到ListView的時候 */
+    private void selectItem(int position){
+        //換標題文字
+        if(layDrawer.isDrawerOpen(Gravity.LEFT))
+            mDrawerTitle = (left_drawer_menu[position]);
+        else
+            mDrawerTitle = (right_drawer_menu[position]);
+        getSupportActionBar().setTitle(mDrawerTitle);
+    }
+
+    /** initial DrawerList */
+    String[] left_drawer_menu;
+    String[] right_drawer_menu;
+    private void initDrawerList(){
+        //left
+        left_drawer_menu = this.getResources().getStringArray(R.array.left_drawer_menu);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.drawer_list_item, left_drawer_menu);
+        lsv_L_Drawer.setAdapter(adapter);
+        //right
+        get_friends_list();
+        adapter = new ArrayAdapter<String>(this, R.layout.drawer_list_item, right_drawer_menu);
+        lsv_R_Drawer.setAdapter(adapter);
+    }
+    /**跟資料庫要friend_list*/
+    private void get_friends_list(){
+
+        right_drawer_menu = new String[] {"friendA", "friendB"};
+
+    }
+
+
+    ///////////////////////////
+    ////////user info//////////
+    ///////////////////////////
+    String username;
+    int user_id;
+    private void getUserInfo(){
+        Bundle bundle = this.getIntent().getExtras();
+
+        username = bundle.getString("USR_NAME");
+        user_id = bundle.getInt("USR_ID");
+    }
+
+    private void setUserInfo() {
+        TextView username_text = (TextView) findViewById(R.id.username_textv);
+        username_text.setText(username);
+    }
+
+
+    ///////////////////////////
+    ////////friend_list////////
+    ///////////////////////////
+    String fre_req_name = "fre_req_name";
+    LinearLayout fri_req_linlay;
+    boolean hasFriReq = true;
+    private void setFriendRequest(){
+        fri_req_linlay = (LinearLayout)findViewById(R.id.fri_req_lay);
+        fri_req_linlay.setVisibility(View.VISIBLE);
+
+        TextView fri_req_text = (TextView)findViewById(R.id.fri_req_text);
+
+        fri_req_text.setText(this.getResources().getString(R.string.friend_request) + " " + fre_req_name );
+
+        //set button and listener
+        Button fri_req_OK_btn = (Button)findViewById(R.id.fri_req_OK_btn);
+        Button fri_req_NO_btn = (Button)findViewById(R.id.fri_req_NO_btn);
+
+        fri_req_OK_btn.setOnClickListener(new Button.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                //confirm
+                hasFriReq = false;
+
+                fri_req_linlay.setVisibility(View.GONE);
+            }
+        });
+
+        fri_req_NO_btn.setOnClickListener(new Button.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                //拒絕
+                hasFriReq = false;
+
+                fri_req_linlay.setVisibility(View.GONE);
+            }
+        });
     }
 }
 

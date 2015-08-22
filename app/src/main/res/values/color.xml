@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <color name="dark_blue_green">#FF23BDA9</color>
+    <color name="light_yellow">#ffefffbb</color>
+    <color name="transparent">#00000000</color>
+    <color name="dark_blue_green">#ef27b8a4</color>
     <color name="blue_green">#ff31ffe7</color>
     <color name="light_blue_green">#FFD2FFEF</color>
     <color name="white">#ffffff</color>

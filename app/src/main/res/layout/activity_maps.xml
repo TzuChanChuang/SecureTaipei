@@ -7,6 +7,7 @@
     tools:context=".MainActivity"
     >
 
+    <!-- ToolBar -->
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_height="wrap_content"
@@ -15,84 +16,261 @@
         android:background="?attr/colorPrimary"
         android:minHeight="?attr/actionBarSize"
         android:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-        app:theme="@style/ThemeOverlay.AppCompat.ActionBar"/>
+        app:theme="@style/AppTheme"/>
 
+    <!-- drawerLayout -->
+    <android.support.v4.widget.DrawerLayout
+        android:id="@+id/drawer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    <RelativeLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
+        <!-- The main content view -->
+        <!-- Google map -->
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
 
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+                    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+                    android:layout_height="match_parent" android:id="@+id/map" tools:context=".MapsActivity"
+                    android:name="com.google.android.gms.maps.SupportMapFragment" />
+            </LinearLayout>
 
             <LinearLayout
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <EditText
-                    android:id="@+id/et_location"
-                    android:layout_width="298dp"
-                    android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:hint="@string/hnt_et_location" />
-
-                <Button
-                    android:id="@+id/btn_find"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/str_btn_find"
-                    android:layout_alignParentRight="true" />
-            </LinearLayout>
-
-            <fragment xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-            android:layout_height="match_parent" android:id="@+id/map" tools:context=".MapsActivity"
-            android:name="com.google.android.gms.maps.SupportMapFragment" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@android:color/transparent">
-
-
-            <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="308dp"
                 android:layout_height="match_parent"
-                android:background="@android:color/transparent"></LinearLayout>
+                android:background="@android:color/transparent"
+                android:weightSum="100">
 
-            <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:weightSum="1"
-                android:background="@android:color/transparent">
 
                 <LinearLayout
                     android:orientation="vertical"
-                    android:layout_width="match_parent"
-                    android:layout_height="392dp"
-                    android:background="@android:color/transparent"></LinearLayout>
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/transparent"
+                    android:layout_weight="70"></LinearLayout>
 
-                <ImageButton
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:id="@+id/CurrentLocation"
-                    android:layout_gravity="right"
-                    android:src="@drawable/current_location"
-                    android:scaleType="fitCenter"
-                    android:padding="8dp"
-                    android:background="@android:color/transparent"/>
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:weightSum="100"
+                    android:background="@android:color/transparent"
+                    android:padding="0dp"
+                    android:layout_weight="30">
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:background="@android:color/transparent"
+                        android:layout_weight="70"></LinearLayout>
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:background="@android:color/transparent"
+                        android:layout_weight="40">
+
+                        <ImageButton
+                            android:layout_width="80dp"
+                            android:layout_height="80dp"
+                            android:id="@+id/CurrentLocation"
+                            android:src="@drawable/currentbtn_selector"
+                            android:scaleType="fitCenter"
+                            android:padding="8dp"
+                            android:background="@android:color/transparent"
+                            android:layout_gravity="center_horizontal" />
+                    </LinearLayout>
+
+                </LinearLayout>
+
             </LinearLayout>
+
+        </RelativeLayout>
+
+        <!-- The navigation drawer (LEFT)-->
+        <LinearLayout android:id="@+id/left_drawer"
+            android:layout_width="240dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:background="@android:color/background_light"
+            android:layout_gravity="left"
+            >
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/user_imgv"
+                        android:src="@drawable/user_ic"
+                        android:layout_gravity="center"
+                        android:padding="8dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/username_textv"
+                        android:text="user name"
+                        android:padding="10dp"
+                        android:autoText="false"
+                        android:textSize="22dp"
+                        android:layout_gravity="center" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:background="@color/dark_blue_green"/>
+
+            <ListView android:id="@+id/lsv_left_menu"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:choiceMode="multipleChoice"
+                android:listSelector="@drawable/listviewselector"/>
 
         </LinearLayout>
 
-    </RelativeLayout>
+        <!-- The navigation drawer (RIGHT) -->
+        <LinearLayout android:id="@+id/right_drawer"
+            android:layout_width="240dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:background="@android:color/background_light"
+            android:layout_gravity="right"
+            android:weightSum="100">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent">
+
+                    <EditText
+                        android:layout_width="wrap_content"
+                        android:layout_height="fill_parent"
+                        android:id="@+id/search_friend_edit"
+                        android:layout_weight="1.03"
+                        android:autoText="false"
+                        android:textColor="@color/black"
+                        android:gravity="center_vertical"
+                        android:padding="10dp"
+                        android:textSize="22dp"
+                        android:hint="friend name"
+                        android:textColorHint="@android:color/darker_gray"/>
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/add_friend_imgv"
+                        android:src="@drawable/addfri_ic"
+                        android:layout_gravity="center"
+                        android:padding="8dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:background="@color/dark_blue_green"/>
+
+            <RelativeLayout
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+
+                <ListView android:id="@+id/lsv_right_menu"
+                    android:layout_width="match_parent"
+                    android:layout_height="fill_parent"
+                    android:choiceMode="multipleChoice"
+                    android:listSelector="@drawable/listviewselector" />
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="fill_parent"
+                    android:layout_height="150dp"
+                    android:layout_alignParentBottom="true"
+                    android:background="@color/light_yellow"
+                    android:weightSum="6"
+                    android:id="@+id/fri_req_lay">
+
+                    <TextView
+                        android:layout_width="fill_parent"
+                        android:layout_height="0dp"
+                        android:text="New Text"
+                        android:id="@+id/fri_req_text"
+                        android:layout_weight="4"
+                        android:textSize="22dp"
+                        android:textColor="@color/dark_blue_green"
+                        android:padding="10dp"
+                        android:layout_gravity="center_horizontal" />
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="fill_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="2"
+                        android:weightSum="2">
+
+                        <Button
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:text="confirm"
+                            android:id="@+id/fri_req_OK_btn"
+                            android:layout_weight="1"
+                            android:textSize="22dp"
+                            android:textColor="@color/white"
+                            android:textAllCaps="false"
+                            android:background="@drawable/btn_fri_req_selector"
+                            android:layout_marginLeft="5dp"
+                            android:layout_marginRight="5dp"
+                            android:layout_marginBottom="5dp" />
+
+                        <Button
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:text="no now"
+                            android:id="@+id/fri_req_NO_btn"
+                            android:layout_weight="1"
+                            android:textSize="22dp"
+                            android:textColor="@color/white"
+                            android:textAllCaps="false"
+                            android:background="@drawable/btn_fri_req_selector"
+                            android:layout_marginLeft="5dp"
+                            android:layout_marginRight="5dp"
+                            android:layout_marginBottom="5dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </RelativeLayout>
+
+        </LinearLayout>
+
+    </android.support.v4.widget.DrawerLayout>
 
 </LinearLayout>

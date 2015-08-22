@@ -1,19 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="app_name">SafetyMap</string>
     <string name="title_activity_maps">Map</string>
     <string name="title_update_location">記事儲存的位置</string>
     <string name="message_update_location">更新或清除儲存的位置資訊?</string>
     <string name="update">更新</string>
     <string name="clear">清除</string>
-
     <string name="title_current_location">目前位置</string>
     <string name="message_current_location">是否儲存目前位置?</string>
-
     <string name="google_play_service_missing">裝置沒有安裝Google Play服務</string>
-
-    <string name="str_btn_find">Search</string>
-    <string name="hnt_et_location">Enter location</string>
-
     <string name="text_search">Enter location</string>
     <string name="search_title">Search</string>
+    <string name="contact_title">Contact us</string>
+    <string name="drawer_open">drawer_open</string>
+    <string name="drawer_close">drawer_close</string>
+
+    <string name="friend_request">you have a friend request from </string>
+
+    <string-array name="left_drawer_menu">
+        <item>警察局</item>
+        <item>易發生婦幼犯罪被害地點</item>
+        <item>易溺水地點</item>
+        <item>監視器</item>
+        <item>肇事路口</item>
+        <item>消防設備不符合規定</item>
+        <item>愛心服務站</item>
+    </string-array>
+
+    <string name="Dog_KEY">AIzaSyDPI4egboCpGcpULXkTKNJdwuBhwnNb97Y</string>
+    <string name="Alice_KEY">AIzaSyDLfJsZ9FQhw_OB2u2TPykL3a0trkgWjUY</string>
+    <string name="title_activity_login">LoginActivity</string>
+
+    <string name="facebook_app_id">995260260519019</string>
+
 </resources>

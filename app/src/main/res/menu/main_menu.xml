@@ -1,13 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
+
     <item
         android:id="@+id/action_search"
         android:actionViewClass="android.support.v7.widget.SearchView"
-        android:icon="@drawable/search_logo"
+        android:icon="@drawable/search_ic"
         app:showAsAction="ifRoom|collapseActionView"
         app:actionViewClass="android.support.v7.widget.SearchView"
         android:title="@string/search_title"
         android:hint="@string/text_search"/>
+
+    <item
+        android:id="@+id/friend_button"
+        android:title="test"
+        android:icon="@drawable/friends_ic"
+        app:showAsAction="always" />
 
 </menu>
