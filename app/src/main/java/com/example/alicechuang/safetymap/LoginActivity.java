@@ -252,6 +252,7 @@ public class LoginActivity extends ActionBarActivity implements
 
                         id = object.optInt("id");
                         username = "FB" + object.optString("name");
+                        password = Integer.toString(id);
                     }
                 });
 
@@ -409,7 +410,7 @@ public class LoginActivity extends ActionBarActivity implements
             showLoading();
 
             if(!isGoogleSignin){//還沒登入
-                Toast.makeText(this, "login", Toast.LENGTH_LONG).show();
+                //Toast.makeText(this, "login", Toast.LENGTH_LONG).show();
                 signInWithGplus();
                 isGoogleBtn = true;
             }
@@ -452,7 +453,7 @@ public class LoginActivity extends ActionBarActivity implements
         Log.d("Google+", "onConnected:" + bundle);
 
         mSignInClicked = false;
-        Toast.makeText(this, "User is connected!", Toast.LENGTH_LONG).show();
+        //Toast.makeText(this, "User is connected!", Toast.LENGTH_LONG).show();
 
         // Get user's information
         getProfileInformation();

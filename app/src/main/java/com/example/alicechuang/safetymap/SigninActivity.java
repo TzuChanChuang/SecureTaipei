@@ -22,13 +22,24 @@ import android.widget.Toast;
 
 public class SigninActivity  extends AsyncTask<String,Void,String>{
     static public URLConnection conn;
+    public URL url;
+    static  public String link_get_score;
+    static  public String link_signup;
 
     private android.support.v7.app.ActionBar status;
     private int byGetOrPost = 0;
 
     //flag 0 means get and 1 means post.(By default it is get.)
     public SigninActivity(int flag) {
+
         byGetOrPost = flag;
+
+
+        String username = "root";
+        String password = "mnipoiperi";
+        link_get_score = "http://106.184.0.211/get_score.php?username="+username+"&password="+password;
+        link_signup = "http://106.184.0.211/sign_up.php?username="+username+"&password="+password;
+
     }
 
     protected void onPreExecute(){
@@ -70,19 +81,17 @@ public class SigninActivity  extends AsyncTask<String,Void,String>{
         }
         else{
             try{
-                String username = "root";
-                String password = "mnipoiperi";
-                String link = "http://106.184.0.211/index.php?username="+username+"& password="+password;
 
-                String data  = URLEncoder.encode("username", "UTF-8") + "=" + URLEncoder.encode(username, "UTF-8");
-                data += "&" + URLEncoder.encode("password", "UTF-8") + "=" + URLEncoder.encode(password, "UTF-8");
 
-                URL url = new URL(link);
+                /*String data  = URLEncoder.encode("username", "UTF-8") + "=" + URLEncoder.encode(username, "UTF-8");
+                data += "&" + URLEncoder.encode("password", "UTF-8") + "=" + URLEncoder.encode(password, "UTF-8");*/
+
+                url = new URL(link_signup);
                 conn = url.openConnection();
 
                 conn.setDoOutput(true);
-                OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-
+                /*OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+//conn.setRequestProperty();
                 wr.write( data );
                 wr.flush();
 
@@ -98,7 +107,9 @@ public class SigninActivity  extends AsyncTask<String,Void,String>{
                     break;
                 }
                 Log.e("shit", sb.toString());
-                return sb.toString();
+                return sb.toString();*/
+                return "";
+
             }
             catch(Exception e){
                 return new String("Exception: " + e.getMessage());

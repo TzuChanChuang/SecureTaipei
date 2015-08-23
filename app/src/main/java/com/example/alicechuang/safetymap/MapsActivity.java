@@ -6,9 +6,6 @@ import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.SearchManager;
-import android.app.SearchableInfo;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -46,6 +43,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -54,20 +52,34 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckedTextView;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.location.Location;
 
 import com.google.android.gms.maps.model.Marker;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Text;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -94,6 +106,12 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
     long millis;
     int seconds;
     int minutes;
+
+    /////set a location
+    private LatLng set_loc;
+    int radius= 70;
+    Circle circle;
+
     //runs without a timer by reposting this handler at the end of the runnable
     Handler timerHandler = new Handler();
     Runnable timerRunnable = new Runnable() {
@@ -106,15 +124,12 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
             seconds = seconds % 60;
 
             android.support.v7.app.ActionBar show= getSupportActionBar();
-            show.setTitle(minutes+":"+seconds);
+            //show.setTitle(minutes+":"+seconds);
             //timerTextView.setText(String.format("%d:%02d", minutes, seconds));
 
             timerHandler.postDelayed(this, 500);
 
-            if(minutes==1){
-                startTime = System.currentTimeMillis();
-                Notification();
-            }
+            //if(minutes==1 && seconds==0) Notification();
         }
     };
 
@@ -159,15 +174,17 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
         }
     }
 
+    List postData = new ArrayList();
     // LocationListener
     @Override
     public void onLocationChanged(Location location) {
         // 位置改變
         // Location參數是目前的位置
+
         currentLocation = location;
         LatLng latLng = new LatLng(
                 location.getLatitude(), location.getLongitude());
-
+        set_loc=latLng;     //////之後要讓set_lo在oncreat時初始化
         if(CurrentLocationStart==1){
             if (currentMarker == null) {
                 currentMarker = mMap.addMarker(new MarkerOptions().position(latLng));
@@ -178,15 +195,113 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
             moveMap(latLng);
             CurrentLocationStart = 0;
 
+            set_loc = latLng;
+            DrawCircle(set_loc);
+///////準備pin出犯罪地點與score和看要不要出notification
+
+            //設定POST參數
+            postData.add(new BasicNameValuePair("username", username));
+            postData.add(new BasicNameValuePair("cur_x", Double.toString(latLng.latitude)));
+            postData.add(new BasicNameValuePair("cur_y", Double.toString(latLng.longitude)));
+
+            Thread thread = new Thread(){
+                public void run(){
+                    String result = httpPOST(SigninActivity.link_get_score, postData);
+                    if(result==null){
+                        Log.e("F", "httppost error");
+                        //顯示錯誤訊息
+                    }
+                }
+            };
+            thread.start();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            /////////////////////////
+            //取出post_result值
+            if(post_result.contains("-")) {
+                Notification();
+                circle.remove();
+                DrawCircle2(set_loc);
+            }
+
+            LatLng point1= new LatLng(25.020137, 121.534032);
+            DrawCircle_good(point1);
+            LatLng point2= new LatLng(25.022431, 121.535649);
+            DrawCircle_bad(point2);
+            LatLng point3= new LatLng(25.021458, 121.533329);
+            DrawCircle_bad(point3);
+            LatLng point4= new LatLng(25.019647, 121.533148);
+            DrawCircle_bad(point4);
+            LatLng point5= new LatLng(25.021979, 121.537778);
+            DrawCircle_good(point5);
+
+
         }
-        
-        Circle circle = mMap.addCircle(new CircleOptions()
-                .center(latLng)
-                .radius(300)    //meters
-                .strokeColor(Color.BLACK)
-                .fillColor(Color.RED));
+        if(CalculationByDistance(set_loc,latLng)>radius||minutes==5) {       //if user moves out of the circle
+            if(minutes==5){                       //if user stays at the same circle for five minutes
+                startTime = System.currentTimeMillis();
+            }
+            circle.remove();
+            set_loc=latLng;
+            DrawCircle(set_loc);
+///////準備pin出犯罪地點與score和看要不要出notification
+
+        }
+
     }
 
+    /**
+     * Issue a POST request to the server.
+     * @param url POST address.
+     * @param params request parameters.
+     */
+    public String post_result=null;
+    private String httpPOST(String url, List params){
+        HttpPost post = new HttpPost(url);
+        try {
+            //送出HTTP request
+            post.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
+            //取得HTTP response
+            HttpResponse httpResponse = new DefaultHttpClient().execute(post);
+            //檢查狀態碼，200表示OK
+            if (httpResponse.getStatusLine().getStatusCode()==200){
+                //取出回應字串
+                post_result = EntityUtils.toString(httpResponse.getEntity());
+                return post_result;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public double CalculationByDistance(LatLng StartP, LatLng EndP) {
+        int Radius = 6371;// radius of earth in Km
+        double lat1 = StartP.latitude;
+        double lat2 = EndP.latitude;
+        double lon1 = StartP.longitude;
+        double lon2 = EndP.longitude;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1))
+                * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2)
+                * Math.sin(dLon / 2);
+        double c = 2 * Math.asin(Math.sqrt(a));
+        double valueResult = Radius * c;
+        double km = valueResult / 1;
+        DecimalFormat newFormat = new DecimalFormat("####");
+        int kmInDec = Integer.valueOf(newFormat.format(km));
+        double meter = valueResult % 1000;
+        int meterInDec = Integer.valueOf(newFormat.format(meter));
+        Log.i("Radius Value", "" + valueResult + "   KM  " + kmInDec
+                + " Meter   " + meterInDec);
+
+        return Radius * c;
+    }
     // 移動地圖到參數指定的位置
     private void moveMap(LatLng place) {
         // 建立地圖攝影機的位置物件
@@ -239,6 +354,8 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+
+
         //get bubble
         getUserInfo();
         setUserInfo();
@@ -281,11 +398,10 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
                 googleApiClient.connect();
             }
         }
-
-
         ///////for search bar
         // Getting a reference to the map
         mMap = mapFragment.getMap();
+        mMap.setMyLocationEnabled(true);
 
         //////Image Button--CurrentLocation
         SetupImageButton1_CurrentLocation();
@@ -294,7 +410,38 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
         startTime = System.currentTimeMillis();
         timerHandler.postDelayed(timerRunnable, 0);
 
+        //set_loc= new LatLng(mMap.getMyLocation().getLatitude(),mMap.getMyLocation().getLongitude());
+        //DrawCircle(set_loc);
 
+    }
+    public void DrawCircle(LatLng loc){
+        circle = mMap.addCircle(new CircleOptions()
+                .center(loc)
+                .radius(70)    //meters
+                .strokeColor(0x66ACD6FF)
+                .fillColor(0x6684C1FF));
+    }
+    public void DrawCircle2(LatLng loc){
+        circle = mMap.addCircle(new CircleOptions()
+                .center(loc)
+                .radius(70)    //meters
+                .strokeColor(0x66FF2D2D)
+                .fillColor(0x66FF0000));
+    }
+
+    public void DrawCircle_good(LatLng loc){
+        circle = mMap.addCircle(new CircleOptions()
+                .center(loc)
+                .radius(10)    //meters
+                .strokeColor(0x6600DB00)
+                .fillColor(0x66009100));
+    }
+    public void DrawCircle_bad(LatLng loc){
+        circle = mMap.addCircle(new CircleOptions()
+                .center(loc)
+                .radius(10)    //meters
+                .strokeColor(0x66BB3D00)
+                .fillColor(0x66642100));
     }
 
     /////////add notification///
@@ -303,8 +450,8 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
         PendingIntent pIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), intent, 0);
 
         Notification noti = new Notification.Builder(this)
-                .setContentTitle("New mail from " + "test@gmail.com")
-                .setContentText("Subject").setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle("You are in danger!")
+                .setContentText("The score of your nearby area is negative.").setSmallIcon(R.drawable.ic_launcher)
                 .setContentIntent(pIntent)
                 .addAction(R.drawable.ic_launcher, "Call", pIntent)
                 .addAction(R.drawable.ic_launcher, "More", pIntent)
@@ -614,7 +761,7 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setLogo(R.drawable.ic_launcher);
         getSupportActionBar().setDisplayUseLogoEnabled(true);
-
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         //要讓 ActionBar 左邊的 App icon 出現返回的箭號，可以設定
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
