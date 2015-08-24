@@ -27,7 +27,7 @@
             android:value="@integer/google_play_services_version" />
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="@string/Alice_KEY" />
+            android:value="AIzaSyChWbH8xj4CqJl_72KhDCakw9cdZVuVENk" />
         <meta-data
             android:name="com.facebook.sdk.ApplicationId"
             android:value="@string/facebook_app_id"/>

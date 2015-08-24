@@ -25,6 +25,7 @@ public class SigninActivity  extends AsyncTask<String,Void,String>{
     public URL url;
     static  public String link_get_score;
     static  public String link_signup;
+    static public String link_getPins;
 
     private android.support.v7.app.ActionBar status;
     private int byGetOrPost = 0;
@@ -39,7 +40,7 @@ public class SigninActivity  extends AsyncTask<String,Void,String>{
         String password = "mnipoiperi";
         link_get_score = "http://106.184.0.211/get_score.php?username="+username+"&password="+password;
         link_signup = "http://106.184.0.211/sign_up.php?username="+username+"&password="+password;
-
+        link_getPins = "http://106.184.0.211/get_pins.php?username="+username+"&password="+password;
     }
 
     protected void onPreExecute(){

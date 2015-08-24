@@ -78,8 +78,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Array;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -196,10 +198,12 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
             CurrentLocationStart = 0;
 
             set_loc = latLng;
-            DrawCircle(set_loc);
+
+            DrawCircle_here_not_dangerous(set_loc);
 ///////準備pin出犯罪地點與score和看要不要出notification
 
             //設定POST參數
+            postData = new ArrayList();
             postData.add(new BasicNameValuePair("username", username));
             postData.add(new BasicNameValuePair("cur_x", Double.toString(latLng.latitude)));
             postData.add(new BasicNameValuePair("cur_y", Double.toString(latLng.longitude)));
@@ -224,21 +228,50 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
             if(post_result.contains("-")) {
                 Notification();
                 circle.remove();
-                DrawCircle2(set_loc);
+                DrawCircle2_here_dangerous(set_loc);
+            }
+            else{
+                circle.remove();
+                DrawCircle_here_not_dangerous(set_loc);
             }
 
-            LatLng point1= new LatLng(25.020137, 121.534032);
-            DrawCircle_good(point1);
-            LatLng point2= new LatLng(25.022431, 121.535649);
-            DrawCircle_bad(point2);
-            LatLng point3= new LatLng(25.021458, 121.533329);
-            DrawCircle_bad(point3);
-            LatLng point4= new LatLng(25.019647, 121.533148);
-            DrawCircle_bad(point4);
-            LatLng point5= new LatLng(25.021979, 121.537778);
-            DrawCircle_good(point5);
 
+            //取出附近的點
+            postData = new ArrayList();
+            postData.add(new BasicNameValuePair("cur_x", Double.toString(latLng.latitude)));
+            postData.add(new BasicNameValuePair("cur_y", Double.toString(latLng.longitude)));
+            thread = new Thread(){
+                public void run(){
+                    String result = httpPOST(SigninActivity.link_getPins, postData);
+                    if(result==null){
+                        Log.e("F", "httppost error");
+                        //顯示錯誤訊息
+                    }
+                }
+            };
+            thread.start();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            //get post_result
+            Log.e("Pins", post_result);
 
+            List<String> items = Arrays.asList(post_result.replace("\\\"","").split("\\s*,\\s*"));
+            int j;
+            int kk = 1 + 1 ;
+            for (j=0; j<items.size()-3;j=j+3){
+                float x,y;
+                boolean score=false;
+                x=Float.parseFloat(items.get(j).split(":")[1]);
+                y=Float.parseFloat(items.get(j+1).split(":")[1]);
+                score=(Float.parseFloat((items.get(j+2).split(":")[1]).substring(0,(items.get(j+2).split(":")[1]).length()-1))>0);
+
+                LatLng pinspoint= new LatLng(x, y);
+                if(score) DrawCircle_nearby_good(pinspoint);
+                else DrawCircle_nearby_good(pinspoint);
+            }
         }
         if(CalculationByDistance(set_loc,latLng)>radius||minutes==5) {       //if user moves out of the circle
             if(minutes==5){                       //if user stays at the same circle for five minutes
@@ -246,7 +279,7 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
             }
             circle.remove();
             set_loc=latLng;
-            DrawCircle(set_loc);
+            DrawCircle_here_not_dangerous(set_loc);
 ///////準備pin出犯罪地點與score和看要不要出notification
 
         }
@@ -414,29 +447,29 @@ public class MapsActivity extends ActionBarActivity implements ConnectionCallbac
         //DrawCircle(set_loc);
 
     }
-    public void DrawCircle(LatLng loc){
+    public void DrawCircle_here_not_dangerous(LatLng loc) {
         circle = mMap.addCircle(new CircleOptions()
                 .center(loc)
                 .radius(70)    //meters
                 .strokeColor(0x66ACD6FF)
                 .fillColor(0x6684C1FF));
     }
-    public void DrawCircle2(LatLng loc){
+    public void DrawCircle2_here_dangerous(LatLng loc){
         circle = mMap.addCircle(new CircleOptions()
                 .center(loc)
                 .radius(70)    //meters
-                .strokeColor(0x66FF2D2D)
+                .strokeColor(0x66FF2D2D)        //red
                 .fillColor(0x66FF0000));
     }
 
-    public void DrawCircle_good(LatLng loc){
+    public void DrawCircle_nearby_good(LatLng loc){
         circle = mMap.addCircle(new CircleOptions()
                 .center(loc)
                 .radius(10)    //meters
                 .strokeColor(0x6600DB00)
                 .fillColor(0x66009100));
     }
-    public void DrawCircle_bad(LatLng loc){
+    public void DrawCircle_nearby_bad(LatLng loc){
         circle = mMap.addCircle(new CircleOptions()
                 .center(loc)
                 .radius(10)    //meters
